@@ -16,38 +16,21 @@ from flask import Flask, redirect, url_for, request, render_template
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
-from sklearn.externals import joblib
-import skimage
-from skimage.io import imread
-from skimage.transform import resize
-from sklearn.utils import Bunch
+import tensorflow as tf
 
 label_output = ['Healthy', 'Mosiac Virus', "Wooly Aphids", "Rust"]
-
-def load_image_file(file, dimension=(128, 128)):
-    images = []
-    flat_data = []
-    target = []
- 
-    img = skimage.io.imread(file)
-    img_resized = resize(img, dimension, anti_aliasing=True, mode='reflect')
-    flat_data.append(img_resized.flatten()) 
-
-    flat_data = np.array(flat_data)
-
-    return Bunch(data=flat_data,)
 
 # Define a flask app
 app = Flask(__name__)
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'models/SVM_SKLEARN.sav'
+MODEL_PATH = 'models/AlexNet.h5'
 
 # Load your trained model
-# model = load_model(MODEL_PATH)
-# model._make_predict_function()          # Necessary
+model = tf.keras.models.load_model(MODEL_PATH)
+model._make_predict_function()          # Necessary
 
-model = joblib.load(MODEL_PATH)
+# model = joblib.load(MODEL_PATH)
 
 print('Model loaded. Start serving...')
 
@@ -60,10 +43,19 @@ print('Model loaded. Check http://127.0.0.1:5000/')
 
 def model_predict(img_path, model):
 
-    x = img_path
-    input_image = load_image_file(x)
-    result = model.predict(input_image.data)[0]
-    return label_output[result]
+    img = image.load_img(img_path, target_size=(200, 200))
+
+    # Preprocessing the image
+    x = image.img_to_array(img)
+    # x = np.true_divide(x, 255)
+    x = np.expand_dims(x, axis=0)
+
+    # Be careful how your trained model deals with the input
+    # otherwise, it won't make correct prediction!
+    x = preprocess_input(x, mode='caffe')
+
+    preds = model.predict(x)
+    return preds
 
 
 @app.route('/', methods=['GET'])
@@ -89,7 +81,7 @@ def upload():
 
         # Process your result for human
         
-        result = preds
+        result = str(preds)
         return result
     return None
 
