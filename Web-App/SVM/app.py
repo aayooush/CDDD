@@ -22,7 +22,7 @@ from skimage.io import imread
 from skimage.transform import resize
 from sklearn.utils import Bunch
 
-label_output = ['Healthy', 'Mosiac Virus', "Wooly Aphids", "Rust"]
+label_output = ['Healthy', 'Mosaic Virus', "Wooly Aphids", "Rust"]
 
 def load_image_file(file, dimension=(128, 128)):
     images = []

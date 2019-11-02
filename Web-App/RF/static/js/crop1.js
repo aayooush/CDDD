@@ -66,7 +66,7 @@ $(document).ready(function () {
                 $('#tri').text(tri[2]);
                 $('#pre').text(pre[2]);
               }
-              else if(data == "Mosiac Virus"){
+              else if(data == "Mosaic Virus"){
                 $('#sym').text(sym[3]);
                 $('#tri').text(tri[3]);
                 $('#pre').text(pre[3]);

@@ -17,17 +17,37 @@ from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
 import tensorflow as tf
+import cv2
+import numpy as np
+# import matplotlib.pyplot as plt
+# from tensorflow.keras.models import load_model
 
-label_output = ['Healthy', 'Mosiac Virus', "Wooly Aphids", "Rust"]
+IMG_W = 200
+IMG_H = 200
+disease ={0:'Healthy', 
+          1:'Mosaic Virus', 
+          2:'Rust', 
+          3:'Wooly Aphids'} 
+
+def normalize(df):    
+    return (df - df.min()) / (df.max() - df.min())
+
+def process(path):
+    im = cv2.imread(path, cv2.IMREAD_COLOR) 
+    b,g,r = cv2.split(im)
+    image = cv2.merge([r,g,b])
+    res = cv2.resize(image,(IMG_W, IMG_H), interpolation = cv2.INTER_CUBIC)
+    return np.array(res, dtype=np.int32)
 
 # Define a flask app
 app = Flask(__name__)
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'models/AlexNet.h5'
+MODEL_PATH = 'models/CNN_model.h5'
 
 # Load your trained model
 model = tf.keras.models.load_model(MODEL_PATH)
+model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=["accuracy"])
 model._make_predict_function()          # Necessary
 
 # model = joblib.load(MODEL_PATH)
@@ -43,18 +63,25 @@ print('Model loaded. Check http://127.0.0.1:5000/')
 
 def model_predict(img_path, model):
 
-    img = image.load_img(img_path, target_size=(200, 200))
+    # img = image.load_img(img_path, target_size=(200, 200))
+    # 
+    # # Preprocessing the image
+    # x = image.img_to_array(img)
+    # # x = np.true_divide(x, 255)
+    # x = np.expand_dims(x, axis=0)
+    # 
+    # # Be careful how your trained model deals with the input
+    # # otherwise, it won't make correct prediction!
+    # x = preprocess_input(x, mode='caffe')
+    # 
+    # preds = model.predict(x)
+    img = process(img_path)
 
-    # Preprocessing the image
-    x = image.img_to_array(img)
-    # x = np.true_divide(x, 255)
-    x = np.expand_dims(x, axis=0)
-
-    # Be careful how your trained model deals with the input
-    # otherwise, it won't make correct prediction!
-    x = preprocess_input(x, mode='caffe')
-
-    preds = model.predict(x)
+    input_image = []
+    input_image.append(normalize(img))
+    input_image = np.array(input_image)
+    preds = model.predict(input_image)
+    
     return preds
 
 
@@ -78,10 +105,16 @@ def upload():
 
         # Make prediction
         preds = model_predict(file_path, model)
+        
+        fp = []
+        for i in preds:
+            fp.append(list(i).index(max(i)))
+            
+        result = disease[fp[0]]
 
         # Process your result for human
         
-        result = str(preds)
+        # result = list(preds).index(max(preds))
         return result
     return None
 
