@@ -22,12 +22,12 @@ import numpy as np
 # import matplotlib.pyplot as plt
 # from tensorflow.keras.models import load_model
 
-IMG_W = 200
-IMG_H = 200
+IMG_W = 224
+IMG_H = 224
 disease ={0:'Healthy', 
-          1:'Mosaic Virus', 
-          2:'Rust', 
-          3:'Wooly Aphids'} 
+          1:'Rust', 
+          2:'Wooly Aphids', 
+          3:'Mosaic Virus'} 
 
 def normalize(df):    
     return (df - df.min()) / (df.max() - df.min())
@@ -43,7 +43,7 @@ def process(path):
 app = Flask(__name__)
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'models/CNN_model.h5'
+MODEL_PATH = 'models/CNN-Model-New.h5'
 
 # Load your trained model
 model = tf.keras.models.load_model(MODEL_PATH)
@@ -123,5 +123,5 @@ if __name__ == '__main__':
     # app.run(port=5002, debug=True)
 
     # Serve the app with gevent
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
+    http_server = WSGIServer(('192.168.43.217',5000),app)
     http_server.serve_forever()
